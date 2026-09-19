@@ -1,13 +1,19 @@
 import os
 from collections.abc import Generator
+from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./soc_toolkit.db")
+if DATABASE_URL.startswith("sqlite"):
+    sqlite_path = make_url(DATABASE_URL).database
+    if sqlite_path and sqlite_path != ":memory:":
+        Path(sqlite_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
